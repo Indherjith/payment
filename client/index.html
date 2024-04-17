@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <button id="buy">checkout</button>
+    <button id="pay">pay now</button>
+</body>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    document.getElementById("pay").style.display = "none"; 
+    var order_details=null;
+    document.getElementById("pay").addEventListener('click', () => {
+        payment(order_details);
+    });
+    const button = document.querySelector("#buy");
+
+    button.addEventListener('click', () => {
+        const myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+
+        const raw = JSON.stringify({
+        "amount": 1000000,
+        "currency": "INR",
+        "receipt": "Receipt no. 1",
+        "notes": {
+            "notes_key_1": "Tea, Earl Grey, Hot",
+            "notes_key_2": "Tea, Earl Grey… decaf."
+        }
+        });
+
+        const requestOptions = {
+        method: "POST",
+        headers: myHeaders,
+        body: raw,
+        redirect: "follow"
+        };
+
+        fetch("http://localhost:8080/order", requestOptions)
+        .then((response) => response.text())
+        .then((result) =>{
+            order_details = JSON.parse(result); 
+            console.log(order_details);
+            alert("Your Order Created Successfully");
+            document.getElementById("buy").style.display = "none"; 
+            document.getElementById("pay").style.display = "block";
+        }) 
+        .catch((error) => alert("payment failed", error));
+    });
+
+    function payment(response){
+        var response = order_details.order_req;
+        var options = {
+            "key": "rzp_test_0PrQVsaMPvaHCU",
+            "amount": response.amount,
+            "currency": "INR",
+            "name": "Payment_server_trail",
+            "description": "Purchase Description",
+            "order_id": response.id,
+            "handler": function (response){
+                if(response.razorpay_payment_id){
+                    alert("Your Transaction ID is " + response.razorpay_payment_id)
+                }
+                else{
+                    alert("Payment Failed")
+                }
+            },
+            "prefill": {
+                "name": "Indher",
+                "phone_number": "8072454199",
+                "email": "indher26@gmail.com"
+            },
+            "theme": {
+                "color": "#3399cc"
+            }
+        };
+
+        var rzp = new Razorpay(options);
+        rzp.open();
+
+    }
+</script>
+</html>
